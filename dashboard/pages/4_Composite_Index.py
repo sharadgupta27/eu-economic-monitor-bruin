@@ -40,7 +40,7 @@ with st.sidebar:
         default=list(ALL.keys()),
         format_func=lambda c: f"{c} — {ALL[c]}",
     )
-    year_range = st.slider("Year range", 2000, 2023, (2005, 2023))
+    year_range = st.slider("Year range", 2000, datetime.now().year, (2005, datetime.now().year))
     radar_country = st.selectbox(
         "Radar chart country",
         options=sel_countries if sel_countries else list(ALL.keys()),
@@ -75,11 +75,17 @@ except Exception as e:
         st.error(f"**Data load error:** {err}", icon="🚨")
     st.stop()
 
+latest_data_year = (
+    int(df["reference_year"].max())
+    if not df.empty and "reference_year" in df.columns
+    else datetime.now().year - 1
+)
+
 page_header(
     icon="📊",
     title="Composite Economic Index",
     subtitle="Min-max normalised score (0–100) combining GDP growth, unemployment, and energy efficiency · Higher = better",
-    badge=f"Updated {datetime.now().strftime('%b %Y')}",
+    badge=f"Data: {latest_data_year}",
 )
 
 # ── KPIs ───────────────────────────────────────────────────────────────────
@@ -93,13 +99,13 @@ if not df.empty:
 
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            st.metric("EU Average Score", f"{avg_score:.0f}/100")
+            st.metric(f"EU Average Score ({latest_data_year})", f"{avg_score:.0f}/100")
         with c2:
-            st.metric("Top Performer", top_row["country_name"], f"{top_row['composite_score']:.0f}/100")
+            st.metric(f"Top Performer ({latest_data_year})", top_row["country_name"], f"{top_row['composite_score']:.0f}/100")
         with c3:
-            st.metric("Needs Improvement", bottom_row["country_name"], f"{bottom_row['composite_score']:.0f}/100")
+            st.metric(f"Needs Improvement ({latest_data_year})", bottom_row["country_name"], f"{bottom_row['composite_score']:.0f}/100")
         with c4:
-            st.metric("Median Score", f"{med_score:.0f}/100")
+            st.metric(f"Median Score ({latest_data_year})", f"{med_score:.0f}/100")
 
 # ── Tabs ───────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
@@ -142,8 +148,9 @@ with tab1:
                     f"</tr>"
                 )
             html_table = (
+                "<div style='height:500px;overflow-y:auto;border:1px solid #2E3250;border-radius:8px;'>"
                 "<table style='width:100%;border-collapse:collapse;font-family:Inter'>"
-                "<thead><tr style='border-bottom:2px solid #2E3250'>"
+                "<thead><tr style='border-bottom:2px solid #2E3250;position:sticky;top:0;background:#0E1117;z-index:1'>"
                 "<th style='padding:.5rem .8rem;color:#FFCC00'>#</th>"
                 "<th style='padding:.5rem .8rem;color:#FFCC00;text-align:left'>Country</th>"
                 "<th style='padding:.5rem .8rem;color:#FFCC00'>Composite</th>"
@@ -153,8 +160,9 @@ with tab1:
                 "</tr></thead><tbody>"
                 + "".join(html_rows)
                 + "</tbody></table>"
+                "</div>"
             )
-            st.markdown(html_table, unsafe_allow_html=True)
+            st.html(html_table)
 
         with col_bar:
             fig_rank = bar_ranking(
@@ -243,12 +251,13 @@ with tab4:
                 ("gdp_score", "GDP Score", EU_BLUE),
                 ("unemployment_score", "Unemployment Score", EU_GOLD),
                 ("energy_score", "Energy Score", "#27AE60"),
+                ("inflation_score", "Inflation Score", "#E74C3C"),
             ]
             for col, label, color in components:
                 if col in c_df.columns:
                     fig_stack.add_trace(go.Bar(
                         x=c_df["reference_year"],
-                        y=c_df[col] / 3,
+                        y=c_df[col] / 4,
                         name=label,
                         marker_color=color,
                     ))
@@ -277,7 +286,13 @@ with tab4:
                 ),
                 height=480,
             )
-            fig_stack.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02))
+            fig_stack.update_layout(legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.15,
+                xanchor="center",
+                x=0.5,
+            ))
             st.plotly_chart(fig_stack, use_container_width=True)
         else:
             st.info(f"No data for {radar_country}.")
@@ -287,11 +302,11 @@ with tab5:
     if not df.empty:
         disp_cols = [c for c in
                      ["country_name", "reference_year", "composite_score",
-                      "gdp_score", "unemployment_score", "energy_score"]
+                      "gdp_score", "unemployment_score", "energy_score", "inflation_score"]
                      if c in df.columns]
         disp = df[disp_cols].copy()
         disp.columns = [c.replace("_", " ").title() for c in disp.columns]
-        st.dataframe(disp, use_container_width=True, height=500)
+        st.dataframe(disp, width='stretch', height=500)
         st.download_button(
             "⬇️ Download CSV",
             df.to_csv(index=False).encode("utf-8"),

@@ -26,7 +26,7 @@ columns:
     description: Year-over-year GDP change in millions
   - name: gdp_yoy_growth_pct
     type: FLOAT
-    description: Year-over-year GDP growth percentage
+    description: Real GDP growth rate (chain-linked volume, % change on previous year — sourced from Eurostat CLV_PCH_PRE)
   - name: unemployment_rate
     type: FLOAT
   - name: unem_yoy_change
@@ -55,6 +55,7 @@ WITH lagged AS (
         reference_date,
         gdp_meur,
         gdp_beur,
+        gdp_real_growth_pct,
         unemployment_rate,
         energy_intensity,
         inflation_rate,
@@ -76,12 +77,10 @@ SELECT
     gdp_meur,
     gdp_beur,
 
-    -- GDP YoY
-    ROUND(gdp_meur - prev_gdp_meur, 2)                                              AS gdp_yoy_change_meur,
-    ROUND(
-        (gdp_meur - prev_gdp_meur) / NULLIF(prev_gdp_meur, 0) * 100,
-        2
-    )                                                                               AS gdp_yoy_growth_pct,
+    -- GDP YoY (nominal change in EUR for absolute deltas)
+    ROUND(gdp_meur - prev_gdp_meur, 2)   AS gdp_yoy_change_meur,
+    -- Real GDP growth rate (chain-linked volume, % change) — sourced directly from Eurostat
+    gdp_real_growth_pct                   AS gdp_yoy_growth_pct,
 
     unemployment_rate,
     ROUND(unemployment_rate - prev_unemployment, 2)                                 AS unem_yoy_change,

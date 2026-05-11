@@ -42,7 +42,7 @@ with st.sidebar:
         default=["DE","FR","IT","ES","PL","NL","SE"],
         format_func=lambda c: f"{c} — {ALL[c]}",
     )
-    year_range = st.slider("Year range", 2000, 2023, (2005, 2023))
+    year_range = st.slider("Year range", 2000, datetime.now().year, (2005, datetime.now().year))
     chart_unit = st.radio("GDP Unit", ["Billion EUR", "Annual Growth %"], horizontal=True)
 
 # ── Load data ──────────────────────────────────────────────────────────────
@@ -65,11 +65,17 @@ except Exception as e:
         st.error(f"**Data load error:** {err}", icon="🚨")
     st.stop()
 
+latest_data_year = (
+    int(df["reference_year"].max())
+    if not df.empty and "reference_year" in df.columns
+    else datetime.now().year - 1
+)
+
 page_header(
     icon="📈",
     title="GDP Analysis",
     subtitle="Source: Eurostat — nama_10_gdp · Unit: Millions EUR (current prices)",
-    badge=f"Updated {datetime.now().strftime('%b %Y')}",
+    badge=f"Data: {latest_data_year}",
 )
 
 # ── KPI row ────────────────────────────────────────────────────────────────
@@ -81,14 +87,14 @@ if not df.empty:
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.metric("Average GDP Growth", f"{avg_growth:+.1f}%", help="Mean YoY growth across selected countries")
+        st.metric(f"Average GDP Growth ({latest_data_year})", f"{avg_growth:+.1f}%", help="Mean YoY growth across selected countries")
     with c2:
         if top_gdp_row is not None:
-            st.metric("Largest Economy", f"{top_gdp_row['country_name']}",
+            st.metric(f"Largest Economy ({latest_data_year})", f"{top_gdp_row['country_name']}",
                       f"{top_gdp_row['gdp_beur']:.0f}B EUR")
     with c3:
         if fastest_row is not None:
-            st.metric("Fastest Growing", f"{fastest_row['country_name']}",
+            st.metric(f"Fastest Growing ({latest_data_year})", f"{fastest_row['country_name']}",
                       f"{fastest_row['gdp_yoy_growth_pct']:+.1f}%")
 
 # ── Tabs ───────────────────────────────────────────────────────────────────
@@ -163,7 +169,7 @@ with tab4:
                         if c in df.columns]
         fmt_df = df[display_cols].copy()
         fmt_df.columns = [c.replace("_"," ").title() for c in fmt_df.columns]
-        st.dataframe(fmt_df, use_container_width=True, height=480)
+        st.dataframe(fmt_df, width='stretch', height=480)
 
         csv = df.to_csv(index=False).encode("utf-8")
         st.download_button("⬇️ Download CSV", csv, "eu_gdp_data.csv", "text/csv")

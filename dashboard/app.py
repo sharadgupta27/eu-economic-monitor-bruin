@@ -42,7 +42,7 @@ with st.sidebar:
         default=list(ALL_COUNTRIES.keys()),
         format_func=lambda c: f"{FLAG_MAP.get(c,'')} {c}  {ALL_COUNTRIES[c]}",
     )
-    year_range = st.slider("Year range", 2000, 2023, (2010, 2023))
+    year_range = st.slider("Year range", 2000, datetime.now().year, (2010, datetime.now().year))
 
     sb_divider()
     sb_label("Data Pipeline")
@@ -99,7 +99,12 @@ with st.spinner(""):
         df_alerts    = pd.DataFrame()
 
 #  KPI row 
-section_header("Economic Snapshot", f"{len(selected_country_codes)} countries")
+latest_data_year = (
+    int(df_latest["reference_year"].max())
+    if not df_latest.empty and "reference_year" in df_latest.columns
+    else datetime.now().year - 1
+)
+section_header("Economic Snapshot", f"{len(selected_country_codes)} countries · {latest_data_year} data")
 
 latest_year_df = (
     df_latest[df_latest["country_code"].isin(selected_country_codes)]
@@ -125,20 +130,20 @@ if not latest_year_df.empty and "composite_score" in latest_year_df.columns:
 c1, c2, c3, c4, c5 = st.columns(5, gap="small")
 with c1:
     kpi_card("GDP Growth (Avg)", f"{avg_gdp_growth:+.1f}%",
-             delta="Year-on-Year avg", delta_up=avg_gdp_growth >= 0,
+             delta=f"Year-on-Year avg ({latest_data_year})", delta_up=avg_gdp_growth >= 0,
              icon="", accent="blue")
 with c2:
     kpi_card("Unemployment", f"{avg_unemp:.1f}%",
-             delta="Active population", icon="", accent="purple")
+             delta=f"Active population ({latest_data_year})", icon="", accent="purple")
 with c3:
     kpi_card("Energy Intensity", f"{avg_energy:.1f}",
-             delta="kgoe / 1 000 EUR GDP", icon="", accent="teal")
+             delta=f"kgoe / 1 000 EUR GDP ({latest_data_year})", icon="", accent="teal")
 with c4:
     kpi_card("Composite Score", f"{avg_composite:.0f}",
-             delta="Scale 0  100", icon="", accent="amber")
+             delta=f"Scale 0  100 ({latest_data_year})", icon="", accent="amber")
 with c5:
     kpi_card("Top Performer", top_country,
-             delta=f"Score {top_score:.0f} / 100",
+             delta=f"Score {top_score:.0f} / 100 ({latest_data_year})",
              delta_up=True, icon="", accent="green")
 
 st.markdown("<div style='height:.65rem'></div>", unsafe_allow_html=True)

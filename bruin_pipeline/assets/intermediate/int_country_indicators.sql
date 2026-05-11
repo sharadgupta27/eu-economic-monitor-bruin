@@ -43,6 +43,7 @@ SELECT
     g.reference_date,
     g.gdp_meur,
     g.gdp_beur,
+    g.gdp_real_growth_pct,
     u.unemployment_rate,
     e.energy_intensity,
     i.inflation_rate

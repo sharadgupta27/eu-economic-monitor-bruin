@@ -39,7 +39,7 @@ COUNTRIES = os.getenv(
 ).split(",")
 
 START_YEAR = int(os.getenv("EUROSTAT_START_YEAR", "2000"))
-END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", "2023"))
+END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", str(date.today().year)))
 
 COUNTRY_NAMES = {
     "AT": "Austria", "BE": "Belgium", "BG": "Bulgaria",
@@ -69,10 +69,17 @@ def fetch_to_long(dataset_code: str, filter_pars: dict) -> pd.DataFrame:
 
 
 def run():
-    df_raw = fetch_to_long(
+    # Current-price GDP levels (millions EUR)
+    df_cp = fetch_to_long(
         "nama_10_gdp",
         {"geo": COUNTRIES, "unit": ["CP_MEUR"], "na_item": ["B1GQ"]},
     )
+    # Real GDP growth rate — chain-linked volume, % change on previous year
+    df_gr = fetch_to_long(
+        "nama_10_gdp",
+        {"geo": COUNTRIES, "unit": ["CLV_PCH_PRE"], "na_item": ["B1GQ"]},
+    )
+    df_raw = pd.concat([df_cp, df_gr], ignore_index=True)
     geo_col = next((c for c in df_raw.columns if "geo" in c.lower()), "geo")
     records = []
     for _, row in df_raw.iterrows():
@@ -113,7 +120,7 @@ COUNTRIES = os.getenv(
 ).split(",")
 
 START_YEAR = int(os.getenv("EUROSTAT_START_YEAR", "2000"))
-END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", "2023"))
+END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", str(date.today().year)))
 
 COUNTRY_NAMES = {
     "AT": "Austria", "BE": "Belgium", "BG": "Bulgaria",

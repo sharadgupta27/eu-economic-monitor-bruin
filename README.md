@@ -29,6 +29,16 @@ This project ingests, transforms, and visualizes **18 EU countries' economic ind
 
 ---
 
+## 📸 Dashboard Preview
+
+### Home — Economic Snapshot
+![Home page showing KPI cards, EU choropleth map, and country rankings](screenshots/home.png)
+
+### GDP Analysis
+![GDP Analysis page showing size rankings and growth rate comparisons](screenshots/gdp.png)
+
+---
+
 ## 🏗 Architecture
 
 ```
@@ -85,6 +95,67 @@ cd dashboard && streamlit run app.py
 ```
 
 📖 See [QUICKSTART_DUCKDB.md](QUICKSTART_DUCKDB.md) for detailed instructions.
+
+---
+
+## 🪟 Quick Execution on Windows
+
+Two batch scripts are provided for one-click operation on Windows. Both scripts require [**uv**](https://github.com/astral-sh/uv) (a fast Python package manager). If `uv` is not installed, follow the prompt shown by the script.
+
+### Install uv (one-time setup)
+
+Open **PowerShell** and run:
+
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Restart your terminal after installation.
+
+---
+
+### `run.bat` — Full pipeline + dashboard
+
+Runs the complete workflow in a single command:
+
+1. **Syncs the Python virtual environment** using `uv sync` (creates/updates `.venv` automatically).
+2. **Executes the Bruin pipeline** — fetches data from the Eurostat API, loads it into DuckDB, and runs all SQL transformations.
+3. **Launches the Streamlit dashboard** at `http://localhost:8501`.
+
+```bat
+run.bat
+```
+
+> If the pipeline exits with a non-zero code (e.g. partial API failure), the script warns you and asks whether to proceed to the dashboard anyway. Press any key to continue or **Ctrl+C** to abort.
+
+---
+
+### `start_dashboard.bat` — Dashboard only
+
+Starts the dashboard without re-running the pipeline. Use this when the database already contains up-to-date data:
+
+```bat
+start_dashboard.bat
+```
+
+The script:
+1. Checks that `uv` is available.
+2. Runs `uv sync` to ensure dependencies are present.
+3. Launches the Streamlit app at `http://localhost:8501`.
+
+Press **Ctrl+C** in the terminal to stop the dashboard.
+
+---
+
+### Typical Windows workflow
+
+```text
+# First run (or after a long gap — refresh the data)
+run.bat
+
+# Subsequent visits (data already loaded — just open the dashboard)
+start_dashboard.bat
+```
 
 ---
 

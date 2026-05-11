@@ -38,7 +38,7 @@ COUNTRIES = os.getenv(
 ).split(",")
 
 START_YEAR = int(os.getenv("EUROSTAT_START_YEAR", "2000"))
-END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", "2023"))
+END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", str(date.today().year)))
 
 COUNTRY_NAMES = {
     "AT": "Austria", "BE": "Belgium", "BG": "Bulgaria",
@@ -113,7 +113,7 @@ COUNTRIES = os.getenv(
 ).split(",")
 
 START_YEAR = int(os.getenv("EUROSTAT_START_YEAR", "2000"))
-END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", "2023"))
+END_YEAR = int(os.getenv("EUROSTAT_END_YEAR", str(date.today().year)))
 
 COUNTRY_NAMES = {
     "AT": "Austria", "BE": "Belgium", "BG": "Bulgaria",

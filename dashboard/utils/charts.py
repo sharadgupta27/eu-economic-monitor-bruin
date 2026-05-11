@@ -178,11 +178,12 @@ def heatmap_country_year(df: pd.DataFrame, value_col: str, title: str,
 # Radar — composite score breakdown
 # ---------------------------------------------------------------------------
 def radar_composite(df_row: pd.Series, country: str) -> go.Figure:
-    categories = ["GDP Score", "Unemployment Score", "Energy Score"]
+    categories = ["GDP Score", "Unemployment Score", "Energy Score", "Inflation Score"]
     values = [
         float(df_row.get("gdp_score", 50)),
         float(df_row.get("unemployment_score", 50)),
         float(df_row.get("energy_score", 50)),
+        float(df_row.get("inflation_score", 50)),
     ]
     values_closed = values + [values[0]]
     categories_closed = categories + [categories[0]]
@@ -223,18 +224,19 @@ def stacked_scores(df: pd.DataFrame, country_code: str) -> go.Figure:
         "gdp_score": ("GDP Score", EU_BLUE),
         "unemployment_score": ("Unemployment Score", EU_GOLD),
         "energy_score": ("Energy Score", "#27AE60"),
+        "inflation_score": ("Inflation Score", "#E74C3C"),
     }
     for col, (label, color) in components.items():
         if col in c.columns:
             fig.add_trace(go.Bar(
-                x=c["reference_year"], y=c[col] / 3,
+                x=c["reference_year"], y=c[col] / 4,
                 name=label, marker_color=color,
             ))
     fig.update_layout(
         barmode="stack",
         title=f"Composite Score Components — {country_code}",
         xaxis_title="Year",
-        yaxis_title="Score Component (0-100/3)",
+        yaxis_title="Score Component (0-100/4)",
         **CHART_LAYOUT,
         height=380,
     )

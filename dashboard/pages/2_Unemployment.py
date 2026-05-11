@@ -7,6 +7,7 @@ Unemployment rate trends, heatmaps and country comparisons.
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
 
 from utils.duckdb_client import get_unemployment
 from utils.charts import line_trend, bar_ranking, heatmap_country_year
@@ -38,7 +39,7 @@ with st.sidebar:
         default=list(ALL.keys()),
         format_func=lambda c: f"{c} — {ALL[c]}",
     )
-    year_range = st.slider("Year range", 2000, 2023, (2005, 2023))
+    year_range = st.slider("Year range", 2000, datetime.now().year, (2005, datetime.now().year))
 
 @st.cache_data(ttl=300)
 def load_unemp(countries, y0, y1):
@@ -59,11 +60,17 @@ except Exception as e:
         st.error(f"**Data load error:** {err}", icon="🚨")
     st.stop()
 
+latest_data_year = (
+    int(df["reference_year"].max())
+    if not df.empty and "reference_year" in df.columns
+    else datetime.now().year - 1
+)
+
 page_header(
     icon="👷",
     title="Unemployment Analysis",
     subtitle="Source: Eurostat — une_rt_a · Total unemployment rate as % of active population",
-    badge=f"Updated {datetime.now().strftime('%b %Y')}",
+    badge=f"Data: {latest_data_year}",
 )
 
 # KPIs
@@ -76,14 +83,14 @@ if not df.empty:
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("EU Average (latest)", f"{avg_unemp:.1f}%")
+        st.metric(f"EU Average ({latest_data_year})", f"{avg_unemp:.1f}%")
     with c2:
         if lowest is not None:
-            st.metric("Lowest Rate", f"{lowest['country_name']}",
+            st.metric(f"Lowest Rate ({latest_data_year})", f"{lowest['country_name']}",
                       f"{lowest['unemployment_rate']:.1f}%")
     with c3:
         if highest is not None:
-            st.metric("Highest Rate", f"{highest['country_name']}",
+            st.metric(f"Highest Rate ({latest_data_year})", f"{highest['country_name']}",
                       f"{highest['unemployment_rate']:.1f}%")
     with c4:
         if yoy_avg is not None:
@@ -168,7 +175,7 @@ with tab4:
         disp = df[[c for c in ["country_name", "reference_year", "unemployment_rate", "unemp_yoy_change"]
                    if c in df.columns]].copy()
         disp.columns = [c.replace("_"," ").title() for c in disp.columns]
-        st.dataframe(disp, use_container_width=True, height=480)
+        st.dataframe(disp, width='stretch', height=480)
         st.download_button(
             "⬇️ Download CSV",
             df.to_csv(index=False).encode("utf-8"),

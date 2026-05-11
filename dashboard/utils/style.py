@@ -316,12 +316,8 @@ def page_header(icon: str, title: str, subtitle: str, badge: str = "") -> None:
 def section_header(title: str, badge: str = "") -> None:
     """Render a styled section heading with optional badge."""
     badge_html = f'<span class="section-badge">{badge}</span>' if badge else ""
-    st.markdown(
-        f"""<div class="section-header">
-            <span class="section-title">{title}</span>
-            {badge_html}
-        </div>""",
-        unsafe_allow_html=True,
+    st.html(
+        f'<div class="section-header"><span class="section-title">{title}</span>{badge_html}</div>'
     )
 
 

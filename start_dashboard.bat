@@ -16,7 +16,27 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Ensure venv exists with dependencies
+REM Clear any conflicting VIRTUAL_ENV from other projects
+set VIRTUAL_ENV=
+
+REM Check for DuckDB data file; run ingestion pipeline if missing
+if not exist "data\eurostat.duckdb" (
+    echo   [INFO] data\eurostat.duckdb not found.
+    echo   [INFO] Running Bruin ingestion pipeline first ...
+    echo.
+    call run.bat
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] Ingestion pipeline failed. Cannot start dashboard.
+        exit /b 1
+    )
+    echo.
+)
+
+REM Recreate venv if trampoline scripts are stale/broken
+if exist .venv (
+    rmdir /s /q .venv
+)
 uv sync --quiet
 
 echo   Dashboard: http://localhost:8501
@@ -24,6 +44,7 @@ echo.
 echo   Press Ctrl+C to stop.
 echo.
 
-uv run streamlit run dashboard/app.py
+REM Run streamlit directly via venv Python to avoid uv trampoline issues
+.venv\Scripts\python.exe -m streamlit run dashboard/app.py
 
 endlocal

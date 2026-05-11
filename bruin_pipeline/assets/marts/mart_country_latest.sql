@@ -51,6 +51,22 @@ WITH latest_year AS (
     FROM eurostat_processed.int_country_indicators
     WHERE gdp_meur IS NOT NULL
     GROUP BY country_code
+),
+-- Energy data is typically 2-3 years behind GDP; pull from its own latest available year
+latest_energy_year AS (
+    SELECT
+        country_code,
+        MAX(reference_year) AS latest_energy_year
+    FROM eurostat_processed.int_country_indicators
+    WHERE energy_intensity IS NOT NULL
+    GROUP BY country_code
+),
+energy_snapshot AS (
+    SELECT i.country_code, i.energy_intensity
+    FROM eurostat_processed.int_country_indicators i
+    JOIN latest_energy_year le
+        ON i.country_code = le.country_code
+       AND i.reference_year = le.latest_energy_year
 )
 
 SELECT
@@ -59,7 +75,7 @@ SELECT
     i.reference_year                        AS latest_year,
     ROUND(i.gdp_beur, 2)                    AS gdp_beur,
     ROUND(i.unemployment_rate, 2)           AS unemployment_rate,
-    ROUND(i.energy_intensity, 3)            AS energy_intensity,
+    ROUND(e.energy_intensity, 3)            AS energy_intensity,
     ROUND(i.inflation_rate, 2)              AS inflation_rate,
     ROUND(d.gdp_yoy_growth_pct, 2)          AS gdp_yoy_growth_pct,
     ROUND(d.unem_yoy_change, 2)             AS unem_yoy_change,
@@ -71,6 +87,8 @@ FROM eurostat_processed.int_country_indicators i
 JOIN latest_year ly
     ON i.country_code = ly.country_code
    AND i.reference_year = ly.latest_year
+LEFT JOIN energy_snapshot e
+    ON i.country_code = e.country_code
 LEFT JOIN eurostat_processed.int_yoy_deltas d
     ON i.country_code = d.country_code
    AND i.reference_year = d.reference_year

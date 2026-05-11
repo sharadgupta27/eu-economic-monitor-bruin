@@ -40,8 +40,8 @@ with st.sidebar:
         default=list(ALL.keys()),
         format_func=lambda c: f"{c} — {ALL[c]}",
     )
-    year_range = st.slider("Year range", 2000, 2023, (2000, 2023))
-    scatter_year = st.slider("Scatter plot year", 2000, 2023, 2022)
+    year_range = st.slider("Year range", 2000, datetime.now().year, (2000, datetime.now().year))
+    scatter_year = st.slider("Scatter plot year", 2000, datetime.now().year, datetime.now().year - 1)
 
 @st.cache_data(ttl=300)
 def load_energy(countries, y0, y1):
@@ -67,11 +67,17 @@ except Exception as e:
         st.error(f"**Data load error:** {err}", icon="🚨")
     st.stop()
 
+latest_data_year = (
+    int(df_energy["reference_year"].max())
+    if not df_energy.empty and "reference_year" in df_energy.columns
+    else datetime.now().year - 1
+)
+
 page_header(
     icon="⚡",
     title="Energy Intensity Analysis",
     subtitle="Source: Eurostat — nrg_ind_ei · kgoe per 1,000 EUR GDP (2015 prices) · Lower = more efficient",
-    badge=f"Updated {datetime.now().strftime('%b %Y')}",
+    badge=f"Data: {latest_data_year}",
 )
 
 # KPIs
@@ -93,15 +99,15 @@ if not df_energy.empty:
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("EU Average (latest)", f"{avg_ei:.1f} kgoe/1k€")
+        st.metric(f"EU Average ({latest_data_year})", f"{avg_ei:.1f} kgoe/1k€")
     with c2:
         if not most_eff.empty:
             r = most_eff.iloc[0]
-            st.metric("Most Efficient", r["country_name"], f"{r['energy_intensity']:.1f} kgoe/1k€")
+            st.metric(f"Most Efficient ({latest_data_year})", r["country_name"], f"{r['energy_intensity']:.1f} kgoe/1k€")
     with c3:
         if not least_eff.empty:
             r = least_eff.iloc[0]
-            st.metric("Least Efficient", r["country_name"], f"{r['energy_intensity']:.1f} kgoe/1k€")
+            st.metric(f"Least Efficient ({latest_data_year})", r["country_name"], f"{r['energy_intensity']:.1f} kgoe/1k€")
     with c4:
         sign = "▼" if improvement > 0 else "▲"
         st.metric(
@@ -227,7 +233,7 @@ with tab5:
                            ["country_name", "reference_year", "energy_intensity", "energy_yoy_improvement"]
                            if c in df_energy.columns]].copy()
         disp.columns = [c.replace("_"," ").title() for c in disp.columns]
-        st.dataframe(disp, use_container_width=True, height=480)
+        st.dataframe(disp, width='stretch', height=480)
         st.download_button(
             "⬇️ Download CSV",
             df_energy.to_csv(index=False).encode("utf-8"),

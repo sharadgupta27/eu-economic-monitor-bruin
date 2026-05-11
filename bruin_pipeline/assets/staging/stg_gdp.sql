@@ -35,20 +35,37 @@ depends:
 @bruin */
 
 SELECT
-    TRIM(country_code)                        AS country_code,
-    TRIM(country_name)                        AS country_name,
-    CAST(year AS INTEGER)                     AS reference_year,
-    MAKE_DATE(CAST(year AS INTEGER), 1, 1)    AS reference_date,
-    CAST(value AS DOUBLE)                     AS gdp_meur,
-    ROUND(CAST(value AS DOUBLE) / 1000, 3)    AS gdp_beur,
-    unit,
-    loaded_at
-FROM eurostat_raw.gdp_annual
-WHERE value IS NOT NULL
-  AND year IS NOT NULL
-  AND country_code IS NOT NULL
-  AND CAST(year AS INTEGER) BETWEEN 2000 AND 2030
-QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY TRIM(country_code), CAST(year AS INTEGER)
-    ORDER BY loaded_at DESC
-) = 1
+    TRIM(cp.country_code)                     AS country_code,
+    TRIM(cp.country_name)                     AS country_name,
+    CAST(cp.year AS INTEGER)                  AS reference_year,
+    MAKE_DATE(CAST(cp.year AS INTEGER), 1, 1) AS reference_date,
+    CAST(cp.value AS DOUBLE)                  AS gdp_meur,
+    ROUND(CAST(cp.value AS DOUBLE) / 1000, 3) AS gdp_beur,
+    ROUND(CAST(gr.value AS DOUBLE), 2)        AS gdp_real_growth_pct,
+    cp.unit,
+    cp.loaded_at
+FROM (
+    SELECT *
+    FROM eurostat_raw.gdp_annual
+    WHERE unit = 'CP_MEUR'
+      AND value IS NOT NULL
+      AND year IS NOT NULL
+      AND country_code IS NOT NULL
+      AND CAST(year AS INTEGER) BETWEEN 2000 AND 2030
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY TRIM(country_code), CAST(year AS INTEGER)
+        ORDER BY loaded_at DESC
+    ) = 1
+) cp
+LEFT JOIN (
+    SELECT TRIM(country_code) AS country_code, CAST(year AS INTEGER) AS year, value
+    FROM eurostat_raw.gdp_annual
+    WHERE unit = 'CLV_PCH_PRE'
+      AND value IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY TRIM(country_code), CAST(year AS INTEGER)
+        ORDER BY loaded_at DESC
+    ) = 1
+) gr
+    ON TRIM(cp.country_code) = gr.country_code
+   AND CAST(cp.year AS INTEGER) = gr.year
