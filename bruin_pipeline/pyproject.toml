@@ -1,0 +1,9 @@
+[project]
+name = "eurostat-pipeline"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.0.0",
+    "eurostat>=1.0.0",
+    "duckdb>=0.9.0",
+]

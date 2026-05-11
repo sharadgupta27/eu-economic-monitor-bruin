@@ -1,0 +1,367 @@
+# EU Economic Monitor – Bruin + DuckDB Edition
+
+> **Production-grade data pipeline** for European economic statistics using **Bruin CLI** and **DuckDB** - fully local, no cloud required.
+
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![Bruin](https://img.shields.io/badge/bruin-latest-green)
+![DuckDB](https://img.shields.io/badge/duckdb-0.10+-blue)
+
+---
+
+## 🎯 Overview
+
+This project ingests, transforms, and visualizes **18 EU countries' economic indicators** (2000–2023):
+- **GDP** (annual, billions EUR)
+- **Unemployment rate** (%)
+- **Energy intensity** (KGOE per 1000 EUR)
+- **Inflation** (HICP annual change %)
+
+**Pipeline**: Eurostat REST API → DuckDB → Streamlit Dashboard
+
+### Key Features
+✅ **Zero Cloud Dependencies** - Runs entirely on your machine  
+✅ **Unified Orchestration** - Single tool (Bruin CLI) replaces dlt + dbt + Airflow  
+✅ **Fast Analytics** - DuckDB provides instant queries on 24 years of data  
+✅ **Simple Setup** - No Docker, Kubernetes, or cloud accounts needed  
+✅ **Production Patterns** - Staging → Intermediate → Marts data modeling  
+✅ **Interactive Dashboard** - Streamlit with Plotly choropleth maps  
+
+---
+
+## 🏗 Architecture
+
+```
+┌─────────────────────┐
+│   Eurostat API      │  Fetch GDP, unemployment, energy, inflation
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  Bruin Pipeline     │  Python ingestion assets
+│   (4 assets)        │  → eurostat_raw schema
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│   DuckDB Database   │  Local embedded database
+│  data/eurostat.db   │  • eurostat_raw (4 tables)
+│                     │  • eurostat_processed (11 views/tables)
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│   SQL Transform     │  Bruin SQL assets
+│   (11 assets)       │  • 4 staging views
+│                     │  • 2 intermediate tables  
+│                     │  • 5 mart tables
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│ Streamlit Dashboard │  Interactive analytics
+│   (5 pages)         │  GDP / Unemployment / Energy / Composite
+└─────────────────────┘
+```
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# 1. Install Bruin CLI
+curl -LsSf https://raw.githubusercontent.com/bruin-data/bruin/main/install.sh | sh
+
+# 2. Install Python dependencies
+pip install -r bruin_pipeline/pyproject.toml
+pip install -r dashboard/requirements.txt
+
+# 3. Run the pipeline
+bruin validate bruin_pipeline
+bruin run bruin_pipeline
+
+# 4. Launch dashboard
+cd dashboard && streamlit run app.py
+```
+
+📖 See [QUICKSTART_DUCKDB.md](QUICKSTART_DUCKDB.md) for detailed instructions.
+
+---
+
+## 🛠 Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Orchestration** | Bruin CLI | Unified pipeline execution |
+| **Database** | DuckDB | Local embedded analytics database |
+| **Ingestion** | Python + Eurostat lib | API data fetching |
+| **Transformation** | SQL (DuckDB dialect) | 4 staging views, 2 intermediate tables, 5 marts |
+| **Dashboard** | Streamlit | Interactive visualization |
+| **Dependencies** | pandas, plotly | Data manipulation & charts |
+
+---
+
+## 📊 Data Model
+
+### eurostat_raw (Raw Layer)
+- `gdp_annual` - GDP in millions EUR (nama_10_gdp)
+- `unemployment_annual` - Unemployment rates % (une_rt_a)
+- `energy_intensity` - KGOE per 1000 EUR GDP (nrg_ind_ei)
+- `inflation_annual` - HICP annual change % (prc_hicp_aind)
+
+### eurostat_processed (Analytics Layer)
+
+**Staging Views** (cleaning & deduplication):
+- `stg_gdp`, `stg_unemployment`, `stg_energy`, `stg_inflation`
+
+**Intermediate Tables** (joins & calculations):
+- `int_country_indicators` - All indicators joined by country + year
+- `int_yoy_deltas` - Year-over-year changes and growth rates
+
+**Mart Tables** (business layer):
+- `mart_gdp_trends` - GDP trends with YoY metrics
+- `mart_unemployment_comparison` - Cross-country unemployment analysis
+- `mart_energy_intensity` - Energy efficiency trends
+- `mart_composite_economic_index` - Normalized 0-100 composite score
+- `mart_country_latest` - Latest snapshot for each country
+
+---
+
+## 📈 Dashboard Pages
+
+### 1. Main Page
+- **EU Economic Overview** with KPI cards
+- Latest data for all countries
+- Interactive choropleth map
+
+### 2. GDP Analysis
+- Time series trends by country
+- Year-over-year growth rates
+- Cross-country comparisons
+
+### 3. Unemployment
+- Unemployment rate trends
+- YoY changes heatmap
+- Country benchmarking
+
+### 4. Energy Intensity
+- Energy efficiency improvements
+- Trends by country
+- Progress tracking
+
+### 5. Composite Index
+- Economic health score (0-100)
+- Component scores (GDP, unemployment, energy)
+- Radar charts for country profiles
+- Historical index trends
+
+---
+
+## 🧮 Composite Index Methodology
+
+The Composite Economic Index (0-100) combines three normalized scores:
+
+1. **GDP Score** (33.3%)  
+   - Min-max normalization of YoY GDP growth  
+   - Higher growth = higher score
+
+2. **Unemployment Score** (33.3%)  
+   - Inverted min-max normalization  
+   - Lower unemployment = higher score
+
+3. **Energy Score** (33.3%)  
+   - Inverted min-max normalization of energy intensity  
+   - Better efficiency = higher score
+
+**Formula**:
+```sql
+composite_score = (gdp_score + unemployment_score + energy_score) / 3
+```
+
+---
+
+## 📁 Project Structure
+
+```
+bruin_pipeline/
+├── .bruin.yml              # DuckDB connection config
+├── pipeline.yml            # Pipeline schedule & metadata
+├── pyproject.toml          # Python dependencies
+└── assets/
+    ├── ingestion/          # 4 Python assets (Eurostat API)
+    │   ├── ingest_gdp.py
+    │   ├── ingest_unemployment.py
+    │   ├── ingest_energy.py
+    │   └── ingest_inflation.py
+    ├── staging/            # 4 SQL views (cleaning)
+    │   ├── stg_gdp.sql
+    │   ├── stg_unemployment.sql
+    │   ├── stg_energy.sql
+    │   └── stg_inflation.sql
+    ├── intermediate/       # 2 SQL tables (joins + YoY)
+    │   ├── int_country_indicators.sql
+    │   └── int_yoy_deltas.sql
+    └── marts/              # 5 SQL tables (business layer)
+        ├── mart_gdp_trends.sql
+        ├── mart_unemployment_comparison.sql
+        ├── mart_energy_intensity.sql
+        ├── mart_composite_economic_index.sql
+        └── mart_country_latest.sql
+
+data/
+└── eurostat.duckdb         # Local database (created by pipeline)
+
+dashboard/
+├── app.py                  # Streamlit main page
+├── pages/                  # Dashboard pages
+│   ├── 1_GDP_Analysis.py
+│   ├── 2_Unemployment.py
+│   ├── 3_Energy_Intensity.py
+│   └── 4_Composite_Index.py
+└── utils/
+    ├── bigquery_client.py  # DuckDB query wrapper
+    ├── charts.py           # Plotly chart functions
+    └── style.py            # CSS styling
+```
+
+---
+
+## 🔧 Development
+
+### View Pipeline Lineage
+```bash
+bruin lineage bruin_pipeline
+```
+
+### Run Specific Assets
+```bash
+# Just ingestion
+bruin run bruin_pipeline/assets/ingestion
+
+# Just staging
+bruin run bruin_pipeline/assets/staging
+
+# Single asset
+bruin run bruin_pipeline/assets/marts/mart_gdp_trends.sql
+```
+
+### Query DuckDB Directly
+```python
+import duckdb
+
+conn = duckdb.connect('data/eurostat.duckdb', read_only=True)
+
+# View schema
+conn.execute("SHOW TABLES").fetchdf()
+
+# Query data
+df = conn.execute("""
+    SELECT country_name, latest_year, composite_score
+    FROM eurostat_processed.mart_country_latest
+    ORDER BY composite_score DESC
+    LIMIT 10
+""").fetchdf()
+
+print(df)
+conn.close()
+```
+
+### Modify Configuration
+Edit `.bruin.yml` to change DuckDB path:
+```yaml
+connections:
+  duckdb-local:
+    type: duckdb
+    path: custom/path/to/database.duckdb
+```
+
+---
+
+## 🌍 Supported Countries
+
+- 🇦🇹 Austria (AT)
+- 🇧🇪 Belgium (BE)
+- 🇨🇿 Czechia (CZ)
+- 🇩🇪 Germany (DE)
+- 🇩🇰 Denmark (DK)
+- 🇬🇷 Greece (EL)
+- 🇪🇸 Spain (ES)
+- 🇫🇮 Finland (FI)
+- 🇫🇷 France (FR)
+- 🇭🇺 Hungary (HU)
+- 🇮🇪 Ireland (IE)
+- 🇮🇹 Italy (IT)
+- 🇳🇱 Netherlands (NL)
+- 🇵🇱 Poland (PL)
+- 🇵🇹 Portugal (PT)
+- 🇷🇴 Romania (RO)
+- 🇸🇪 Sweden (SE)
+- 🇸🇰 Slovakia (SK)
+
+---
+
+## 🐛 Troubleshooting
+
+### Pipeline fails to run
+```bash
+# Check Bruin installation
+bruin --version
+
+# Validate configuration
+bruin validate bruin_pipeline
+
+# Check Python dependencies
+pip install -r bruin_pipeline/pyproject.toml
+```
+
+### Dashboard shows no data
+```bash
+# Run pipeline first
+bruin run bruin_pipeline
+
+# Check database exists
+ls -lh data/eurostat.duckdb
+
+# Use mock data mode
+USE_MOCK_DATA=true streamlit run dashboard/app.py
+```
+
+### Permission errors (Windows)
+- Run PowerShell as Administrator
+- Check `data/` directory permissions
+
+---
+
+## 📚 Resources
+
+- [Bruin Documentation](https://getbruin.com/docs)
+- [DuckDB Documentation](https://duckdb.org/docs/)
+- [Eurostat API](https://ec.europa.eu/eurostat/web/main/data/database)
+- [Streamlit Documentation](https://docs.streamlit.io)
+
+---
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- **Eurostat** for providing open economic data APIs
+- **Bruin team** for building an excellent data orchestration tool
+- **DuckDB team** for the fast embedded analytics database
+- **Data Engineering Zoomcamp** for project inspiration
+
+---
+
+## 🎓 About
+
+This project demonstrates modern data engineering practices:
+- ELT pattern (Extract-Load-Transform)
+- Medallion architecture (raw → staging → intermediate → marts)
+- Dimensional modeling (fact tables + dimension tables)
+- Local-first development with DuckDB
+- Unified orchestration with Bruin CLI
+- Interactive analytics with Streamlit
