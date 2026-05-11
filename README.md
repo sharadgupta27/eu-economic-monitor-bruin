@@ -11,7 +11,7 @@
 
 ## 🎯 Overview
 
-This project ingests, transforms, and visualizes **18 EU countries' economic indicators** (2000–2023):
+This project ingests, transforms, and visualizes **18 EU countries' economic indicators** (2000–Now):
 - **GDP** (annual, billions EUR)
 - **Unemployment rate** (%)
 - **Energy intensity** (KGOE per 1000 EUR)
