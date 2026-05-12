@@ -31,7 +31,7 @@ This project ingests, transforms, and visualizes **18 EU countries' economic ind
 
 ## 📸 Dashboard Preview
 
-### Home — Economic Snapshot
+### Home - Economic Snapshot
 ![Home page showing KPI cards, EU choropleth map, and country rankings](screenshots/home.png)
 
 ### GDP Analysis
@@ -41,7 +41,8 @@ This project ingests, transforms, and visualizes **18 EU countries' economic ind
 
 ## 🏗 Architecture
 
-```
+![Architecture of the project](screenshots/Architecture.png)
+<!-- ```
 ┌─────────────────────┐
 │   Eurostat API      │  Fetch GDP, unemployment, energy, inflation
 └──────────┬──────────┘
@@ -72,7 +73,7 @@ This project ingests, transforms, and visualizes **18 EU countries' economic ind
 │ Streamlit Dashboard │  Interactive analytics
 │   (5 pages)         │  GDP / Unemployment / Energy / Composite
 └─────────────────────┘
-```
+``` -->
 
 ---
 
@@ -114,12 +115,12 @@ Restart your terminal after installation.
 
 ---
 
-### `run.bat` — Full pipeline + dashboard
+### `run.bat` - Full pipeline + dashboard
 
 Runs the complete workflow in a single command:
 
 1. **Syncs the Python virtual environment** using `uv sync` (creates/updates `.venv` automatically).
-2. **Executes the Bruin pipeline** — fetches data from the Eurostat API, loads it into DuckDB, and runs all SQL transformations.
+2. **Executes the Bruin pipeline** - fetches data from the Eurostat API, loads it into DuckDB, and runs all SQL transformations.
 3. **Launches the Streamlit dashboard** at `http://localhost:8501`.
 
 ```bat
@@ -130,7 +131,7 @@ run.bat
 
 ---
 
-### `start_dashboard.bat` — Dashboard only
+### `start_dashboard.bat` - Dashboard only
 
 Starts the dashboard without re-running the pipeline. Use this when the database already contains up-to-date data:
 
@@ -150,10 +151,10 @@ Press **Ctrl+C** in the terminal to stop the dashboard.
 ### Typical Windows workflow
 
 ```text
-# First run (or after a long gap — refresh the data)
+# First run (or after a long gap - refresh the data)
 run.bat
 
-# Subsequent visits (data already loaded — just open the dashboard)
+# Subsequent visits (data already loaded - just open the dashboard)
 start_dashboard.bat
 ```
 
