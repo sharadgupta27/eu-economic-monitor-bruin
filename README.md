@@ -9,9 +9,15 @@
 
 ---
 
-## 🎯 Overview
+## 🎯 Project Overview
 
-This project ingests, transforms, and visualizes **18 EU countries' economic indicators** (2000–Now):
+This project demonstrates a complete end-to-end data engineering solution for monitoring and analyzing EU economic indicators. It implements modern data engineering best practices including Infrastructure as Code, containerization, stream processing, dimensional modeling, and real-time anomaly detection.
+
+**Data Scope:** - **4 Economic Indicators:** GDP (annual growth), Unemployment rates, Energy Intensity, Inflation (HICP) - **18 EU Countries:** Austria, Belgium, Czech Republic, Germany, Denmark, Greece, Spain, Finland, France, Hungary, Ireland, Italy, Netherlands, Poland, Portugal, Romania, Sweden, Slovakia - **Time Range:** 2000-Latest - **Data Source:** Official Eurostat REST API
+
+**Use Cases:** - Economic trend analysis and forecasting - Cross-country comparative analysis - Real-time monitoring of economic anomalies - Policy impact assessment - Academic research on EU economic integration - Learning modern data engineering patterns and tools
+
+This project ingests, transforms, and visualizes **18 EU countries' economic indicators** (2000–Latest):
 - **GDP** (annual, billions EUR)
 - **Unemployment rate** (%)
 - **Energy intensity** (KGOE per 1000 EUR)
